@@ -1,0 +1,149 @@
+# LoRA Configuration for Parameter-Efficient Fine-Tuning
+
+# LoRA Parameters
+lora:
+  r: 16  # Rank of the low-rank matrices (higher = more parameters but better adaptation)
+  alpha: 32  # Scaling factor (typically 2x rank)
+  dropout: 0.05  # Dropout probability for LoRA layers
+  bias: "none"  # Whether to train bias parameters ("none", "all", "lora_only")
+  task_type: "CAUSAL_LM"  # Task type for the model
+  
+  # Target modules to apply LoRA (model-specific)
+  # For Llama-2 and Mistral: q_proj, v_proj, k_proj, o_proj, gate_proj, up_proj, down_proj
+  target_modules:
+    - q_proj
+    - v_proj
+  
+  # Alternative: Apply to all linear layers (more parameters but better results)
+  # target_modules: "all-linear"
+  
+  # Module patterns to exclude from LoRA
+  modules_to_save: null  # Additional modules to train (e.g., ["lm_head"])
+
+# Model Loading Configuration
+model:
+  # Model architecture
+  model_name_or_path: "meta-llama/Llama-2-7b-hf"  # or "mistralai/Mistral-7B-Instruct-v0.1"
+  trust_remote_code: false
+  use_auth_token: true  # Set to your HF token if needed
+  
+  # Precision and optimization
+  torch_dtype: "bfloat16"  # Use bfloat16 for training (better than fp16)
+  load_in_8bit: false  # Set to true for 8-bit quantization (QLoRA)
+  load_in_4bit: false  # Set to true for 4-bit quantization (QLoRA)
+  
+  # Device mapping
+  device_map: "auto"  # Automatically distribute model across available devices
+  low_cpu_mem_usage: true
+
+# QLoRA Configuration (optional - for even more memory efficiency)
+qlora:
+  enabled: false  # Set to true to use QLoRA instead of LoRA
+  bits: 4  # 4 or 8
+  quant_type: "nf4"  # "nf4" or "fp4"
+  double_quant: true  # Use double quantization
+  compute_dtype: "bfloat16"
+
+# Training Arguments
+training:
+  # Batch sizes
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 4  # Effective batch size = 4 * 4 = 16
+  
+  # Learning rate
+  learning_rate: 2.0e-4
+  lr_scheduler_type: "cosine"  # "cosine", "linear", "constant", "constant_with_warmup"
+  warmup_ratio: 0.03  # 3% of training for warmup
+  warmup_steps: 0  # Alternative to warmup_ratio
+  
+  # Optimization
+  optim: "paged_adamw_32bit"  # "adamw_torch", "adamw_8bit", "paged_adamw_32bit"
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1.0e-8
+  max_grad_norm: 1.0  # Gradient clipping
+  weight_decay: 0.0
+  
+  # Training duration
+  num_train_epochs: 3
+  max_steps: -1  # Override num_train_epochs if > 0
+  
+  # Logging
+  logging_steps: 10
+  logging_first_step: true
+  logging_strategy: "steps"
+  
+  # Evaluation
+  evaluation_strategy: "steps"
+  eval_steps: 500
+  eval_delay: 0
+  
+  # Checkpointing
+  save_strategy: "steps"
+  save_steps: 500
+  save_total_limit: 3  # Keep only last 3 checkpoints
+  save_on_each_node: false
+  
+  # Performance
+  fp16: false  # Don't use fp16 with bfloat16
+  bf16: true  # Use bfloat16 training
+  tf32: true  # Use TF32 on Ampere GPUs
+  dataloader_num_workers: 4
+  dataloader_pin_memory: true
+  group_by_length: false  # Group sequences of similar length
+  
+  # Other
+  seed: 42
+  report_to: ["tensorboard", "wandb"]  # Logging platforms
+  run_name: "llama2-cybersecurity-lora"
+  output_dir: "outputs/llama2-cybersecurity"
+  overwrite_output_dir: false
+  resume_from_checkpoint: null  # Path to resume training
+
+# DeepSpeed Configuration
+deepspeed:
+  enabled: true
+  config_file: "configs/deepspeed_config.json"
+
+# Data Processing
+data:
+  # Dataset configuration
+  dataset_name: "cybersecurity_threats"
+  data_path: "data/processed/cybersecurity"
+  
+  # Text generation parameters
+  max_length: 2048  # Maximum sequence length
+  padding: "max_length"  # "max_length" or "longest"
+  truncation: true
+  
+  # Prompt template (Alpaca format)
+  prompt_template: |
+    Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+    
+    ### Instruction:
+    {instruction}
+    
+    ### Input:
+    {input}
+    
+    ### Response:
+    {output}
+  
+  # Validation split
+  validation_split: 0.1
+  test_split: 0.1
+  
+  # Data preprocessing
+  preprocessing_num_workers: 8
+  remove_columns: ["id", "metadata"]  # Columns to remove
+
+# Inference Configuration
+inference:
+  max_new_tokens: 512
+  temperature: 0.7
+  top_p: 0.9
+  top_k: 50
+  repetition_penalty: 1.1
+  do_sample: true
+  num_beams: 1

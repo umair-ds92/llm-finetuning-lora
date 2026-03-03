@@ -1,0 +1,175 @@
+# Data Configuration for Dataset Preparation and Processing
+
+# Dataset Sources
+datasets:
+  cybersecurity:
+    name: "cybersecurity_threats"
+    description: "Cybersecurity threat analysis and incident response"
+    sources:
+      - type: "json"
+        path: "data/raw/cybersecurity/threats.json"
+      - type: "csv"
+        path: "data/raw/cybersecurity/incidents.csv"
+    target_size: 10000
+    
+  legal:
+    name: "legal_documents"
+    description: "Legal document analysis and processing"
+    sources:
+      - type: "json"
+        path: "data/raw/legal/contracts.json"
+    target_size: 5000
+
+# Data Quality Filters
+quality_filters:
+  # Minimum/maximum text lengths
+  min_instruction_length: 10
+  max_instruction_length: 500
+  min_input_length: 20
+  max_input_length: 2000
+  min_output_length: 20
+  max_output_length: 1000
+  
+  # Filter out low-quality examples
+  remove_duplicates: true
+
+# Data Preprocessing
+preprocessing:
+  # Text cleaning
+  lowercase: false  # Keep original casing for technical terms
+  remove_extra_whitespace: true
+  normalize_unicode: true
+  
+  # Tokenization
+  tokenizer_name: "meta-llama/Llama-2-7b-hf"
+  max_length: 2048
+  padding: "max_length"
+  truncation: true
+  add_special_tokens: true
+  
+  # Instruction formatting
+  prompt_format: "alpaca"  # "alpaca", "vicuna", "custom"
+  
+  # Custom prompt template (if format is "custom")
+  custom_template: |
+    Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+    
+    ### Instruction:
+    {instruction}
+    
+    ### Input:
+    {input}
+    
+    ### Response:
+    {output}
+
+# Data Splitting
+splits:
+  # Split ratios (must sum to 1.0)
+  train: 0.8
+  validation: 0.1
+  test: 0.1
+  
+  # Stratification
+  stratify_by: null  # Column name to stratify by (e.g., "category")
+  
+  # Random seed for reproducibility
+  seed: 42
+  
+  # Shuffle before splitting
+  shuffle: true
+
+# Data Augmentation (optional)
+augmentation:
+  enabled: false
+  
+  # Back-translation
+  back_translation:
+    enabled: false
+    target_languages: ["es", "fr", "de"]
+    probability: 0.2
+  
+  # Paraphrasing
+  paraphrasing:
+    enabled: false
+    model: "tuner007/pegasus_paraphrase"
+    probability: 0.1
+  
+  # Synonym replacement
+  synonym_replacement:
+    enabled: false
+    probability: 0.1
+    max_replacements: 3
+
+# Data Validation
+validation:
+  # Schema validation
+  required_fields: ["instruction", "input", "output"]
+  optional_fields: ["category", "metadata"]
+  
+  # Content validation
+  check_empty_fields: true
+  check_field_types: true
+  
+  # Statistical validation
+  check_length_distribution: true
+  check_label_distribution: true
+  
+  # Output validation report
+  generate_report: true
+  report_path: "data/validation_report.json"
+
+# Cybersecurity-Specific Configuration
+cybersecurity:
+  # Threat categories
+  categories:
+    - "malware_analysis"
+    - "phishing_detection"
+    - "network_intrusion"
+    - "vulnerability_assessment"
+    - "incident_response"
+    - "threat_intelligence"
+  
+  # Entity types to preserve
+  entity_types:
+    - "ip_address"
+    - "domain"
+    - "url"
+    - "hash"
+    - "cve_id"
+    - "file_path"
+  
+  # Severity levels
+  severity_levels:
+    - "critical"
+    - "high"
+    - "medium"
+    - "low"
+    - "informational"
+
+# Output Configuration
+output:
+  # Processed data format
+  format: "jsonl"  # "jsonl", "json", "parquet"
+  
+  # Compression
+  compression: null  # "gzip", "bz2", null
+  
+  # Output paths
+  train_path: "data/splits/train.jsonl"
+  validation_path: "data/splits/validation.jsonl"
+  test_path: "data/splits/test.jsonl"
+  
+  # Metadata
+  save_metadata: true
+  metadata_path: "data/splits/metadata.json"
+  
+  # Statistics
+  save_statistics: true
+  statistics_path: "data/splits/statistics.json"
+
+# Logging
+logging:
+  level: "INFO"  # "DEBUG", "INFO", "WARNING", "ERROR"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/data_preparation.log"

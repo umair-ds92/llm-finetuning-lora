@@ -1,0 +1,58 @@
+# Core ML/DL Libraries
+torch==2.1.0
+transformers==4.35.0
+datasets==2.14.6
+pyarrow==14.0.1
+accelerate==0.24.1
+peft==0.6.0
+
+# DeepSpeed for optimization
+deepspeed==0.12.3
+
+# Data Processing
+pandas==2.1.3
+numpy==1.24.3
+scikit-learn==1.3.2
+jsonlines==4.0.0
+tqdm==4.66.1
+
+# Model Evaluation
+evaluate==0.4.1
+rouge-score==0.1.2
+sacrebleu==2.3.1
+bert-score==0.3.13
+lm-eval==0.4.0
+
+# Configuration Management
+pyyaml==6.0.1
+omegaconf==2.3.0
+hydra-core==1.3.2
+
+# Logging and Monitoring
+wandb==0.15.12
+tensorboard==2.15.1
+loguru==0.7.2
+
+# API and Deployment
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
+python-multipart==0.0.6
+
+# Utilities
+python-dotenv==1.0.0
+click==8.1.7
+rich==13.7.0
+fire==0.5.0
+
+# Optional: Quantization
+bitsandbytes==0.41.2
+optimum==1.14.1
+
+# Optional: ONNX Export
+onnx==1.15.0
+onnxruntime==1.16.3
+
+# Testing (moved to requirements-dev.txt but useful to have)
+pytest==7.4.3
+pytest-cov==4.1.0
