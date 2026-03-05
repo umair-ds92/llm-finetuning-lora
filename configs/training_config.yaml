@@ -1,0 +1,70 @@
+# Training Configuration for LoRA Fine-Tuning
+
+# Model Configuration
+model:
+  base_model: "models/llama-2-7b"
+  model_type: "llama-2"
+  torch_dtype: "bfloat16"
+  device_map: "auto"
+
+# LoRA Configuration
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules:
+    - q_proj
+    - v_proj
+  bias: "none"
+  task_type: "CAUSAL_LM"
+
+# Data Configuration
+data:
+  train_data: "data/splits/train.jsonl"
+  val_data: "data/splits/validation.jsonl"
+  max_length: 2048
+
+# Training Hyperparameters
+training:
+  output_dir: "outputs/lora-finetuned"
+  num_train_epochs: 3
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 4
+  
+  # Optimization
+  learning_rate: 2.0e-4
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.03
+  weight_decay: 0.0
+  max_grad_norm: 1.0
+  
+  # Precision
+  fp16: false
+  bf16: true
+  tf32: true
+  
+  # Logging
+  logging_steps: 10
+  logging_first_step: true
+  
+  # Evaluation
+  evaluation_strategy: "steps"
+  eval_steps: 500
+  
+  # Checkpointing
+  save_strategy: "steps"
+  save_steps: 500
+  save_total_limit: 3
+  
+  # DeepSpeed
+  use_deepspeed: false
+  deepspeed_config: "configs/deepspeed_config.json"
+  
+  # WandB
+  use_wandb: false
+  wandb_project: "llm-finetuning-lora"
+  
+  # Other
+  seed: 42
+  dataloader_num_workers: 4
