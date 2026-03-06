@@ -117,6 +117,12 @@ def parse_args():
         default=4,
         help="Gradient accumulation steps",
     )
+    parser.add_argument(
+        "--max-steps",
+        type=int,
+        default=-1,
+        help="Maximum number of training steps (overrides num-epochs if set)",
+    )
     
     # Config file
     parser.add_argument(
@@ -242,14 +248,24 @@ def setup_model_and_tokenizer(args):
     model.config.use_cache = False
     model.config.pretraining_tp = 1
     
-    # Configure LoRA
+    # Configure LoRA - select target modules based on model type
+    if "gpt2" in args.base_model.lower():
+        # GPT-2
+        target_modules = ["c_attn"]  # GPT-2's attention layer
+    elif "llama" in args.base_model.lower() or "mistral" in args.base_model.lower():
+        # Llama-2 and Mistral
+        target_modules = ["q_proj", "v_proj"]
+    else:
+        # Default fallback
+        target_modules = ["q_proj", "v_proj"]
+
     lora_config = LoraConfig(
         r=args.lora_r,
         lora_alpha=args.lora_alpha,
         lora_dropout=args.lora_dropout,
         bias="none",
         task_type="CAUSAL_LM",
-        target_modules=["q_proj", "v_proj"],  # Can be configured
+        target_modules=target_modules,
     )
     
     logger.info(f"Applying LoRA: r={args.lora_r}, alpha={args.lora_alpha}")
@@ -273,10 +289,22 @@ def setup_datasets(args, tokenizer):
     """Load and prepare training datasets."""
     logger.info("Loading datasets...")
     
-    # Initialize dataset loader
+    # Auto-detect max sequence length based on model
+    if "gpt2" in args.base_model.lower():
+        max_length = 512  # GPT-2 max = 1024, use 512 to be safe
+    elif "llama" in args.base_model.lower():
+        max_length = 2048  # Llama-2 max = 4096, use 2048
+    elif "mistral" in args.base_model.lower():
+        max_length = 2048  # Mistral max = 32768, use 2048 for efficiency
+    else:
+        max_length = 512  # Conservative default
+    
+    logger.info(f"Auto-detected max_length={max_length} for model: {args.base_model}")
+    
+    # Initialize dataset loader with model-specific max_length
     dataset_loader = DatasetLoader(
         tokenizer=tokenizer,
-        max_length=2048,
+        max_length=max_length,  # ← Dynamic
     )
     
     # Load training data
@@ -332,8 +360,8 @@ def setup_training_args(args):
         
         # Precision
         fp16=False,
-        bf16=args.bf16,
-        tf32=True,
+        bf16=False if not torch.cuda.is_available() else args.bf16,
+        tf32=torch.cuda.is_available(),  # Only enable if GPU available
         
         # Logging
         logging_steps=args.logging_steps,
