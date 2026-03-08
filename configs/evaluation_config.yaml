@@ -1,0 +1,45 @@
+# Evaluation Configuration
+
+# Model Configuration
+model:
+  base_model: "gpt2"  # or "meta-llama/Llama-2-7b-hf"
+  adapter_path: "outputs/lora-finetuned"  # Path to trained LoRA adapter
+  model_name: "fine-tuned-model"
+
+# Data Configuration
+data:
+  test_data: "data/splits/test.jsonl"
+  max_samples: null  # null = use all, or specify number for quick testing
+
+# Evaluation Settings
+evaluation:
+  batch_size: 4
+  max_new_tokens: 256
+  temperature: 0.7
+  top_p: 0.9
+  seed: 42
+
+# Output
+output:
+  output_dir: "outputs/evaluation"
+  save_predictions: true
+  save_examples: 10  # Number of example predictions to save
+
+# Comparison
+comparison:
+  compare_with_base: true  # Compare fine-tuned vs base model
+  metrics:
+    - exact_match
+    - rouge1_fmeasure
+    - rouge2_fmeasure
+    - rougeL_fmeasure
+    - bleu
+    - token_accuracy
+
+# Generation Quality Metrics
+quality_metrics:
+  - avg_length
+  - diversity
+  - repetition_rate
+  - coherence
+  - length_ratio
