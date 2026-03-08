@@ -22,8 +22,6 @@ from src.data import DatasetLoader
 from src.evaluation import (
     TaskMetrics,
     compute_generation_quality,
-    evaluate_on_dataset,
-    compare_models,
 )
 from src.utils.logging import setup_logger
 
