@@ -1,19 +1,18 @@
 # Deployment-specific dependencies
+-r requirements.txt
 
-# API server
-fastapi>=0.104.0
-uvicorn[standard]>=0.24.0
-pydantic>=2.5.0
-
-# Model serving
-accelerate>=0.24.0
+# API Server (not in requirements.txt)
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+python-multipart==0.0.6
 
 # Monitoring
 prometheus-fastapi-instrumentator>=6.1.0
 
-# Testing
+# API Testing
 requests>=2.31.0
 httpx>=0.25.0
 
-# AWS (for later)
+# AWS SDK
 boto3>=1.29.0
