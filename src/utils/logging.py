@@ -7,8 +7,6 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from loguru import logger
-
 
 def setup_logger(
     name: str,
@@ -28,39 +26,39 @@ def setup_logger(
     Returns:
         Configured logger instance
     """
-    # Remove default logger
-    logger.remove()
+    # Create logger
+    logger = logging.getLogger(name)
+    logger.setLevel(getattr(logging, level.upper()))
+    
+    # Remove existing handlers to avoid duplicates
+    logger.handlers.clear()
     
     # Default format
     if format_string is None:
         format_string = (
-            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
-            "<level>{level: <8}</level> | "
-            "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
-            "<level>{message}</level>"
+            "%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s"
         )
     
-    # Add console handler
-    logger.add(
-        sys.stderr,
-        format=format_string,
-        level=level,
-        colorize=True,
+    formatter = logging.Formatter(
+        format_string,
+        datefmt="%Y-%m-%d %H:%M:%S"
     )
+    
+    # Add console handler
+    console_handler = logging.StreamHandler(sys.stderr)
+    console_handler.setLevel(getattr(logging, level.upper()))
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
     
     # Add file handler if specified
     if log_file:
         log_path = Path(log_file)
         log_path.parent.mkdir(parents=True, exist_ok=True)
         
-        logger.add(
-            log_file,
-            format=format_string,
-            level=level,
-            rotation="100 MB",  # Rotate when file reaches 100MB
-            retention="10 days",  # Keep logs for 10 days
-            compression="zip",  # Compress rotated logs
-        )
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(getattr(logging, level.upper()))
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
     
     return logger
 
@@ -75,4 +73,4 @@ def get_logger(name: str) -> logging.Logger:
     Returns:
         Logger instance
     """
-    return logger.bind(name=name)
+    return logging.getLogger(name)
